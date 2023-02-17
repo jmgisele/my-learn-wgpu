@@ -15,6 +15,7 @@ struct State {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     window: Window,
+    color: wgpu::Color,
 }
 
 impl State {
@@ -84,6 +85,12 @@ impl State {
         };
         surface.configure(&device, &config);
 
+        let color = wgpu::Color {
+            r: 0.1,
+            g: 0.2,
+            b: 0.3,
+            a: 1.0,
+        };
         Self {
             window,
             surface,
@@ -91,6 +98,7 @@ impl State {
             queue,
             config,
             size,
+            color,
         }
     }
 
@@ -113,6 +121,18 @@ impl State {
 
     fn update(&mut self) {}
 
+    fn recolor(&mut self, pos: &winit::dpi::PhysicalPosition<f64>) {
+        let w_fac = 1. / self.size.width as f64;
+        let h_fac = 1. / self.size.height as f64;
+
+        self.color = wgpu::Color {
+            r: pos.x * w_fac,
+            g: pos.y * h_fac,
+            b: (pos.x * w_fac - pos.y * h_fac).abs().sqrt(),
+            a: 1.0,
+        };
+    }
+
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
 
@@ -132,12 +152,7 @@ impl State {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(self.color),
                         store: true,
                     },
                 })],
@@ -212,7 +227,9 @@ pub async fn run() {
                             // new_inner_size is &&mut so w have to dereference it twice
                             state.resize(**new_inner_size);
                         }
-                        // WindowEvent::CursorMoved {}
+                        WindowEvent::CursorMoved { position, .. } => {
+                            state.recolor(position);
+                        }
                         _ => {}
                     }
                 }
