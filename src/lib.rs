@@ -1,4 +1,3 @@
-use std::iter;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -115,7 +114,7 @@ impl State {
         }
     }
 
-    fn input(&mut self, event: &WindowEvent) -> bool {
+    fn input(&mut self, _event: &WindowEvent) -> bool {
         false
     }
 
