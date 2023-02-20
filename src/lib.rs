@@ -213,8 +213,26 @@ impl State {
         }
     }
 
-    fn input(&mut self, _event: &WindowEvent) -> bool {
-        false
+    fn input(&mut self, event: &WindowEvent) -> bool {
+        match event {
+            WindowEvent::CursorMoved { position, .. } => {
+                self.recolor(position);
+                true
+            }
+            WindowEvent::KeyboardInput {
+                input:
+                    KeyboardInput {
+                        state: ElementState::Released,
+                        virtual_keycode: Some(VirtualKeyCode::Space),
+                        ..
+                    },
+                ..
+            } => {
+                self.is_space = !self.is_space;
+                true
+            }
+            _ => false,
+        }
     }
 
     fn update(&mut self) {}
@@ -333,19 +351,6 @@ pub async fn run() {
                             // new_inner_size is &&mut so w have to dereference it twice
                             state.resize(**new_inner_size);
                         }
-                        WindowEvent::CursorMoved { position, .. } => {
-                            state.recolor(position);
-                        }
-
-                        WindowEvent::KeyboardInput {
-                            input:
-                                KeyboardInput {
-                                    state: ElementState::Released,
-                                    virtual_keycode: Some(VirtualKeyCode::Space),
-                                    ..
-                                },
-                            ..
-                        } => state.is_space = !state.is_space,
                         _ => {}
                     }
                 }
