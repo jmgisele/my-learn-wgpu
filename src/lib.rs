@@ -16,6 +16,8 @@ struct State {
     window: Window,
     color: wgpu::Color,
     render_pipeline: wgpu::RenderPipeline,
+    challenge_pipeline: wgpu::RenderPipeline,
+    is_space: bool,
 }
 
 impl State {
@@ -102,24 +104,22 @@ impl State {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "vs_main", // 1.
-                buffers: &[],           // 2.
+                entry_point: "vs_main",
+                buffers: &[],
             },
             fragment: Some(wgpu::FragmentState {
-                // 3.
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    // 4.
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
             primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+                topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw, // 2.
+                front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
@@ -128,13 +128,53 @@ impl State {
                 // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
-            depth_stencil: None, // 1.
+            depth_stencil: None,
             multisample: wgpu::MultisampleState {
-                count: 1,                         // 2.
-                mask: !0,                         // 3.
-                alpha_to_coverage_enabled: false, // 4.
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
             },
-            multiview: None, // 5.
+            multiview: None,
+        });
+        let challenge_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Challenge Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("challenge.wgsl").into()),
+        });
+        let challenge_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &challenge_shader,
+                entry_point: "vs_main",
+                buffers: &[],
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &challenge_shader,
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: config.format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+                polygon_mode: wgpu::PolygonMode::Fill,
+                ..Default::default()
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            // If the pipeline will be used with a multiview render pass, this
+            // indicates how many array layers the attachments will have.
+            multiview: None,
         });
 
         let color = wgpu::Color {
@@ -143,6 +183,9 @@ impl State {
             b: 0.3,
             a: 1.0,
         };
+
+        let is_space = false;
+
         Self {
             window,
             surface,
@@ -152,6 +195,8 @@ impl State {
             size,
             color,
             render_pipeline,
+            challenge_pipeline,
+            is_space,
         }
     }
 
@@ -212,8 +257,13 @@ impl State {
                 depth_stencil_attachment: None,
             });
 
-            render_pass.set_pipeline(&self.render_pipeline); // 2.
-            render_pass.draw(0..3, 0..1); // 3.
+            render_pass.set_pipeline(if self.is_space {
+                &self.challenge_pipeline
+            } else {
+                &self.render_pipeline
+            });
+
+            render_pass.draw(0..3, 0..1);
         }
 
         // submit will accept anything that implements IntoIter
@@ -286,6 +336,16 @@ pub async fn run() {
                         WindowEvent::CursorMoved { position, .. } => {
                             state.recolor(position);
                         }
+
+                        WindowEvent::KeyboardInput {
+                            input:
+                                KeyboardInput {
+                                    state: ElementState::Released,
+                                    virtual_keycode: Some(VirtualKeyCode::Space),
+                                    ..
+                                },
+                            ..
+                        } => state.is_space = !state.is_space,
                         _ => {}
                     }
                 }
