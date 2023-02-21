@@ -10,6 +10,7 @@ crate-type=["cdylib", "rlib"]
 bytemuck = {version = "1.13.0", features = [ "derive" ] }
 cfg-if = "1.0.0"
 cgmath = "0.18.0"
+image = { version = "0.24.5", features = ["png", "jpeg"] }
 log = "0.4.17"
 pollster = "0.3.0"
 tracing = "0.1.37"
