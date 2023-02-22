@@ -4,6 +4,7 @@ use winit::{
     window::WindowBuilder,
 };
 mod camera;
+mod instance;
 mod state;
 mod texture;
 mod vertices;
