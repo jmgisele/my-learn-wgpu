@@ -3,7 +3,9 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+mod camera;
 mod state;
+mod texture;
 mod vertices;
 
 #[cfg(target_arch = "wasm32")]
