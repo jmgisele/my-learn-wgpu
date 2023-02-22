@@ -15,12 +15,10 @@ pub struct State {
     window: Window,
     color: wgpu::Color,
     render_pipeline: wgpu::RenderPipeline,
-    is_space: bool,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
     diffuse_bind_group: wgpu::BindGroup,
-    diffuse_texture: Texture,
     camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
@@ -211,8 +209,6 @@ impl State {
             a: 1.0,
         };
 
-        let is_space = false;
-
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -305,11 +301,9 @@ impl State {
             color,
             render_pipeline,
             vertex_buffer,
-            is_space,
             num_indices,
             index_buffer,
             diffuse_bind_group,
-            diffuse_texture,
             camera,
             camera_uniform,
             camera_buffer,
