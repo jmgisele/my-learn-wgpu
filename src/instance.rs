@@ -3,12 +3,16 @@ pub struct Instance {
     pub rotation: cgmath::Quaternion<f32>,
 }
 
-pub const ROTATION_SPEED: f32 = std::f32::consts::PI / 60.0 * 0.;
-pub const NUM_INSTANCES_PER_ROW: u32 = 10;
+pub const ROTATION_SPEED: f32 = std::f32::consts::PI / 60.0 * 2.;
+pub fn get_rot_speed() -> f32 {
+    std::f32::consts::PI / 60.0 * 0.2
+}
+
+pub const NUM_INSTANCES_PER_ROW: u32 = 5;
 pub const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
-    NUM_INSTANCES_PER_ROW as f32 * 0.5,
+    NUM_INSTANCES_PER_ROW as f32 * 1.5,
     1.0,
-    NUM_INSTANCES_PER_ROW as f32 * 0.5,
+    NUM_INSTANCES_PER_ROW as f32 * 1.5,
 );
 
 #[repr(C)]

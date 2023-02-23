@@ -1,9 +1,10 @@
 use crate::camera::{Camera, CameraController, CameraUniform};
 use crate::instance::{
-    Instance, InstanceRaw, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW, ROTATION_SPEED,
+    get_rot_speed, Instance, InstanceRaw, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW,
 };
 use crate::texture::Texture;
 use crate::vertices::{Vertex, INDICES, VERTICES};
+use cgmath::num_traits::clamp;
 use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
 use winit::{event::*, window::Window};
@@ -29,6 +30,7 @@ pub struct State {
     instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
     going_up: bool,
+    rot_speed: f32,
 }
 
 impl State {
@@ -98,9 +100,9 @@ impl State {
             view_formats: vec![],
         };
         surface.configure(&device, &config);
-        let diffuse_bytes = include_bytes!("happy-tree.png");
+        let diffuse_bytes = include_bytes!("kate.jpeg");
         let diffuse_texture =
-            Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
+            Texture::from_bytes(&device, &queue, diffuse_bytes, "kate.jpeg").unwrap();
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -189,7 +191,7 @@ impl State {
             label: Some("camera_bind_group"),
         });
 
-        let camera_controller = CameraController::new(0.2);
+        let camera_controller = CameraController::new(0.05);
 
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
@@ -295,6 +297,8 @@ impl State {
         });
 
         let going_up = true;
+        let rot_speed = get_rot_speed();
+
         Self {
             window,
             surface,
@@ -316,6 +320,7 @@ impl State {
             instances,
             instance_buffer,
             going_up,
+            rot_speed,
         }
     }
 
@@ -356,16 +361,20 @@ impl State {
             .iter()
             .fold(0., |acc, inst| acc + inst.position.y)
             / self.instances.len() as f32;
-        if avg_y > 0.9 {
+        if avg_y > 0.0 {
             self.going_up = false;
+            self.rot_speed = -1. * get_rot_speed();
         }
-        if avg_y < -0.9 {
+        if avg_y < -8.0 {
+            self.rot_speed = get_rot_speed();
             self.going_up = true;
         }
-        println!("{}", self.instances[0].position.y);
+        println!("height {}, width {}", self.size.height, self.size.width);
+
+        self.random_recolor();
 
         for instance in &mut self.instances {
-            let amount = cgmath::Quaternion::from_angle_y(cgmath::Rad(ROTATION_SPEED));
+            let amount = cgmath::Quaternion::from_angle_z(cgmath::Rad(self.rot_speed));
             let current = instance.rotation;
             instance.rotation = amount * current;
             instance.position.y = if self.going_up {
@@ -394,6 +403,17 @@ impl State {
             r: pos.x * w_fac,
             g: pos.y * h_fac,
             b: (pos.x * w_fac - pos.y * h_fac).abs().sqrt(),
+            a: 1.0,
+        };
+    }
+
+    pub fn random_recolor(&mut self) {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        self.color = wgpu::Color {
+            r: clamp(self.color.r + rng.gen_range(-0.1..0.1), 0., 1.),
+            g: clamp(self.color.g + rng.gen_range(-0.1..0.1), 0., 1.),
+            b: clamp(self.color.b + rng.gen_range(-0.1..0.1), 0., 1.),
             a: 1.0,
         };
     }
