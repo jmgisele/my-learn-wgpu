@@ -1,5 +1,7 @@
 use crate::camera::{Camera, CameraController, CameraUniform};
-use crate::instance::{Instance, InstanceRaw, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW};
+use crate::instance::{
+    Instance, InstanceRaw, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW, ROTATION_SPEED,
+};
 use crate::texture::Texture;
 use crate::vertices::{Vertex, INDICES, VERTICES};
 use cgmath::prelude::*;
@@ -26,6 +28,7 @@ pub struct State {
     camera_controller: CameraController,
     instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
+    going_up: bool,
 }
 
 impl State {
@@ -288,9 +291,10 @@ impl State {
         let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),
             contents: bytemuck::cast_slice(&instance_data),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
 
+        let going_up = true;
         Self {
             window,
             surface,
@@ -311,6 +315,7 @@ impl State {
             camera_controller,
             instances,
             instance_buffer,
+            going_up,
         }
     }
 
@@ -344,6 +349,40 @@ impl State {
             &self.camera_buffer,
             0,
             bytemuck::cast_slice(&[self.camera_uniform]),
+        );
+
+        let avg_y = self
+            .instances
+            .iter()
+            .fold(0., |acc, inst| acc + inst.position.y)
+            / self.instances.len() as f32;
+        if avg_y > 0.9 {
+            self.going_up = false;
+        }
+        if avg_y < -0.9 {
+            self.going_up = true;
+        }
+        println!("{}", self.instances[0].position.y);
+
+        for instance in &mut self.instances {
+            let amount = cgmath::Quaternion::from_angle_y(cgmath::Rad(ROTATION_SPEED));
+            let current = instance.rotation;
+            instance.rotation = amount * current;
+            instance.position.y = if self.going_up {
+                instance.position.y + 0.01
+            } else {
+                instance.position.y - 0.01
+            };
+        }
+        let instance_data = self
+            .instances
+            .iter()
+            .map(Instance::to_raw)
+            .collect::<Vec<_>>();
+        self.queue.write_buffer(
+            &self.instance_buffer,
+            0,
+            bytemuck::cast_slice(&instance_data),
         );
     }
 

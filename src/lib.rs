@@ -44,7 +44,6 @@ pub async fn run() {
     }
 
     let mut state = state::State::new(window).await;
-
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::WindowEvent {
