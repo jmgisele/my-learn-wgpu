@@ -1,3 +1,4 @@
+use bytemuck::{Pod, Zeroable};
 pub struct Instance {
     pub position: cgmath::Vector3<f32>,
     pub rotation: cgmath::Quaternion<f32>,
@@ -16,7 +17,7 @@ pub const _INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 );
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable)]
 pub struct InstanceRaw {
     model: [[f32; 4]; 4],
 }
