@@ -3,7 +3,7 @@ pub struct Instance {
     pub rotation: cgmath::Quaternion<f32>,
 }
 
-pub const ROTATION_SPEED: f32 = std::f32::consts::PI / 60.0 * 2.;
+pub const _ROTATION_SPEED: f32 = std::f32::consts::PI / 60.0 * 2.;
 pub fn get_rot_speed() -> f32 {
     std::f32::consts::PI / 60.0 * 0.2
 }
