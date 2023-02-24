@@ -4,17 +4,20 @@ pub struct Instance {
     pub rotation: cgmath::Quaternion<f32>,
 }
 
+impl Copy for Instance {}
+impl Clone for Instance {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
 pub const _ROTATION_SPEED: f32 = std::f32::consts::PI / 60.0 * 2.;
-pub fn get_rot_speed() -> f32 {
+pub fn _get_rot_speed() -> f32 {
     std::f32::consts::PI / 60.0 * 0.2
 }
 
-pub const NUM_INSTANCES_PER_ROW: u32 = 5;
-pub const _INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
-    NUM_INSTANCES_PER_ROW as f32 * 1.5,
-    1.0,
-    NUM_INSTANCES_PER_ROW as f32 * 1.5,
-);
+pub const NUM_INSTANCES_PER_ROW: u32 = 10;
+pub const _INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(0., 0., 0.);
 
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]

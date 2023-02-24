@@ -1,6 +1,6 @@
 use crate::camera::{Camera, CameraController, CameraUniform};
-use crate::instance::{get_rot_speed, Instance, InstanceRaw, NUM_INSTANCES_PER_ROW};
-use crate::model::{DrawModel, ModelVertex, Vertex};
+use crate::instance::{Instance, InstanceRaw, NUM_INSTANCES_PER_ROW};
+use crate::model::{DrawModel, Model, ModelVertex, Vertex};
 use crate::texture::Texture;
 use cgmath::num_traits::clamp;
 use cgmath::prelude::*;
@@ -23,10 +23,8 @@ pub struct State {
     camera_controller: CameraController,
     instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
-    going_up: bool,
-    rot_speed: f32,
     depth_texture: Texture,
-    obj_model: crate::model::Model,
+    obj_model: Model,
 }
 
 impl State {
@@ -235,7 +233,7 @@ impl State {
             },
             multiview: None,
         });
-        const SPACE_BETWEEN: f32 = 3.0;
+        const SPACE_BETWEEN: f32 = 2.0;
         let instances = (0..NUM_INSTANCES_PER_ROW)
             .flat_map(|z| {
                 (0..NUM_INSTANCES_PER_ROW).map(move |x| {
@@ -250,7 +248,7 @@ impl State {
                             cgmath::Deg(0.0),
                         )
                     } else {
-                        cgmath::Quaternion::from_axis_angle(position.normalize(), cgmath::Deg(45.0))
+                        cgmath::Quaternion::from_axis_angle(position.normalize(), cgmath::Deg(0.0))
                     };
 
                     Instance { position, rotation }
@@ -270,9 +268,6 @@ impl State {
                 .await
                 .unwrap();
 
-        let going_up = true;
-        let rot_speed = get_rot_speed();
-
         Self {
             window,
             surface,
@@ -289,8 +284,6 @@ impl State {
             camera_controller,
             instances,
             instance_buffer,
-            going_up,
-            rot_speed,
             depth_texture,
             obj_model,
         }
@@ -330,32 +323,8 @@ impl State {
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
 
-        let avg_y = self
-            .instances
-            .iter()
-            .fold(0., |acc, inst| acc + inst.position.y)
-            / self.instances.len() as f32;
-        if avg_y > 0.0 {
-            self.going_up = false;
-            self.rot_speed = -1. * get_rot_speed();
-        }
-        if avg_y < -8.0 {
-            self.rot_speed = get_rot_speed();
-            self.going_up = true;
-        }
-
         self.random_recolor();
 
-        for instance in &mut self.instances {
-            let amount = cgmath::Quaternion::from_angle_z(cgmath::Rad(self.rot_speed));
-            let current = instance.rotation;
-            instance.rotation = amount * current;
-            instance.position.y = if self.going_up {
-                instance.position.y + 0.01
-            } else {
-                instance.position.y - 0.01
-            };
-        }
         let instance_data = self
             .instances
             .iter()
