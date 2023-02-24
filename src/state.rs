@@ -1,10 +1,7 @@
 use crate::camera::{Camera, CameraController, CameraUniform};
-use crate::instance::{
-    get_rot_speed, Instance, InstanceRaw, INSTANCE_DISPLACEMENT, NUM_INSTANCES_PER_ROW,
-};
+use crate::instance::{get_rot_speed, Instance, InstanceRaw, NUM_INSTANCES_PER_ROW};
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::texture::Texture;
-use crate::vertices::{INDICES, VERTICES};
 use cgmath::num_traits::clamp;
 use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
@@ -19,10 +16,6 @@ pub struct State {
     window: Window,
     color: wgpu::Color,
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
-    diffuse_bind_group: wgpu::BindGroup,
     camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
@@ -103,9 +96,6 @@ impl State {
             view_formats: vec![],
         };
         surface.configure(&device, &config);
-        let diffuse_bytes = include_bytes!("kate.jpeg");
-        let diffuse_texture =
-            Texture::from_bytes(&device, &queue, diffuse_bytes, "kate.jpeg").unwrap();
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -131,21 +121,6 @@ impl State {
                 ],
                 label: Some("texture_bind_group_layout"),
             });
-
-        let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view), // CHANGED!
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler), // CHANGED!
-                },
-            ],
-            label: Some("diffuse_bind_group"),
-        });
 
         let camera = Camera {
             // position the camera one unit up and 2 units back
@@ -195,20 +170,6 @@ impl State {
         });
 
         let camera_controller = CameraController::new(0.05);
-
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-
-        let num_indices = INDICES.len() as u32;
 
         let color = wgpu::Color {
             r: 0.1,
@@ -321,10 +282,6 @@ impl State {
             size,
             color,
             render_pipeline,
-            vertex_buffer,
-            num_indices,
-            index_buffer,
-            diffuse_bind_group,
             camera,
             camera_uniform,
             camera_buffer,
@@ -386,7 +343,6 @@ impl State {
             self.rot_speed = get_rot_speed();
             self.going_up = true;
         }
-        println!("height {}, width {}", self.size.height, self.size.width);
 
         self.random_recolor();
 

@@ -9,7 +9,7 @@ pub fn get_rot_speed() -> f32 {
 }
 
 pub const NUM_INSTANCES_PER_ROW: u32 = 5;
-pub const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
+pub const _INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 1.5,
     1.0,
     NUM_INSTANCES_PER_ROW as f32 * 1.5,
