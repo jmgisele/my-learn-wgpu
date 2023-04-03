@@ -1,0 +1,12 @@
+{
+  "name": "wgpu_1",
+  "version": "0.1.0",
+  "files": [
+    "wgpu_1_bg.wasm",
+    "wgpu_1.js",
+    "wgpu_1.d.ts"
+  ],
+  "module": "wgpu_1.js",
+  "types": "wgpu_1.d.ts",
+  "sideEffects": false
+}
