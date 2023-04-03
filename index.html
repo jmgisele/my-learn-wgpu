@@ -14,10 +14,8 @@
 
   <body id="wasm-example">
     <script type="module">
-      import testing from "./pkg/test.js";
       import init from "./pkg/wgpu_1.js";
 
-      testing();
       init().then(console.log("actually loaded"));
     </script>
   </body>
